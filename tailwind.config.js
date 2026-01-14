@@ -7,14 +7,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        'reader-bg': '#000000',
-        'reader-text': '#ffffff',
-        'reader-orp': '#ff3333',
-        'reader-guide': '#333333',
-        'reader-highlight': 'rgba(255, 51, 51, 0.2)',
+        'reader-bg': '#0a0a0a',
+        'reader-text': '#d4d4d4',
+        'reader-orp': '#c45c5c',
+        'reader-guide': '#3a3a3a',
+        'reader-highlight': 'rgba(196, 92, 92, 0.2)',
       },
       fontFamily: {
-        'reader': ['Inter', 'system-ui', 'sans-serif'],
+        'reader': ['Georgia', 'Cambria', 'Times New Roman', 'serif'],
         'mono': ['JetBrains Mono', 'Consolas', 'monospace'],
       },
     },

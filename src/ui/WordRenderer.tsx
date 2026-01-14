@@ -14,7 +14,7 @@ const ORP_ANCHOR_POSITION = 0.35
 export function WordRenderer({ 
   token, 
   fontSize = 64,
-  fontFamily = 'Inter, system-ui, sans-serif'
+  fontFamily = 'Georgia, Cambria, Times New Roman, serif'
 }: WordRendererProps) {
   const { measureText } = useTextMeasure(fontFamily, fontSize, 500)
   
@@ -48,8 +48,8 @@ export function WordRenderer({
   
   const containerWidth = 800
   const anchorX = containerWidth * ORP_ANCHOR_POSITION
-  const translateX = anchorX - leftWidth
-  const tickX = anchorX + orpWidth / 2
+  const translateX = anchorX - leftWidth - orpWidth / 2
+  const tickX = anchorX
   
   const tickHeight = 28
   const lineOffset = 58
