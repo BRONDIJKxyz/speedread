@@ -12,6 +12,8 @@ export function detectFormat(filename: string): FileFormat | null {
       return 'docx'
     case 'epub':
       return 'epub'
+    case 'txt':
+      return 'txt'
     default:
       return null
   }
@@ -44,6 +46,11 @@ export async function ingestFile(file: File): Promise<Document> {
     case 'epub':
       text = await extractEpubText(file)
       break
+    case 'txt':
+      text = await file.text()
+      break
+    default:
+      throw new Error(`Unsupported format: ${format}`)
   }
   
   if (!text || text.trim().length === 0) {

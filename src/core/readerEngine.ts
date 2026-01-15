@@ -32,7 +32,6 @@ export class ReaderEngine {
   private timerId: number | null = null
   private listeners: Set<ReaderEngineListener> = new Set()
   private pausedAt: number | null = null
-  private wasPlayingBeforePause = false
 
   constructor(scheduler: Scheduler = browserScheduler) {
     this.scheduler = scheduler
@@ -112,7 +111,6 @@ export class ReaderEngine {
 
   holdStart(): void {
     if (this.settings.mode !== 'hold-space') return
-    this.wasPlayingBeforePause = this.state === 'playing'
     if (this.state !== 'playing') {
       this.play()
     }
