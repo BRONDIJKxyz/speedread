@@ -11,8 +11,7 @@ import {
   Clock,
   Edit2,
   Check,
-  X,
-  ClipboardPaste
+  X
 } from 'lucide-react'
 import { 
   getAllDocuments, 
@@ -35,7 +34,7 @@ export function LibraryView() {
   const [importError, setImportError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
-  const [showPasteModal, setShowPasteModal] = useState(false)
+  const [activeTab, setActiveTab] = useState<'text' | 'website'>('text')
   const [pasteText, setPasteText] = useState('')
   const [pasteTitle, setPasteTitle] = useState('')
   
@@ -144,16 +143,16 @@ export function LibraryView() {
     setImportError(null)
     
     try {
-      await ingestText(pasteText, pasteTitle.trim() || undefined)
-      setShowPasteModal(false)
+      const doc = await ingestText(pasteText, pasteTitle.trim() || undefined)
       setPasteText('')
       setPasteTitle('')
+      navigate(`/read/${doc.id}`)
     } catch (err) {
       setImportError(err instanceof Error ? err.message : 'Failed to import text')
     } finally {
       setImporting(false)
     }
-  }, [pasteText, pasteTitle])
+  }, [pasteText, pasteTitle, navigate])
   
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString(undefined, {
@@ -196,32 +195,33 @@ export function LibraryView() {
               <Download size={16} />
               Export
             </button>
+          </div>
+        </div>
+        
+        {/* Tab Toggle */}
+        <div className="flex items-center justify-center mb-8">
+          <div className="inline-flex bg-gray-900 rounded-full p-1">
             <button
-              onClick={() => setShowPasteModal(true)}
-              disabled={importing}
+              onClick={() => setActiveTab('text')}
               className={clsx(
-                "flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm",
-                importing 
-                  ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-800 hover:bg-gray-700 text-white"
+                "px-8 py-2 rounded-full text-sm font-medium transition-all",
+                activeTab === 'text'
+                  ? "bg-white text-gray-900"
+                  : "text-gray-400 hover:text-white"
               )}
-              title="Paste text"
             >
-              <ClipboardPaste size={16} />
-              Paste Text
+              Text
             </button>
             <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={importing}
+              onClick={() => setActiveTab('website')}
               className={clsx(
-                "flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium",
-                importing 
-                  ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                  : "bg-reader-orp hover:bg-red-500 text-white"
+                "px-8 py-2 rounded-full text-sm font-medium transition-all",
+                activeTab === 'website'
+                  ? "bg-white text-gray-900"
+                  : "text-gray-400 hover:text-white"
               )}
             >
-              <Upload size={16} />
-              {importing ? 'Importing...' : 'Add Document'}
+              Website
             </button>
           </div>
         </div>
@@ -250,12 +250,10 @@ export function LibraryView() {
           </div>
         )}
         
-        {/* Paste Text Modal */}
-        {showPasteModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowPasteModal(false)}>
-            <div className="bg-gray-900 rounded-xl p-6 max-w-2xl w-full mx-4 border border-gray-800" onClick={(e) => e.stopPropagation()}>
-              <h2 className="text-xl font-bold mb-4">Paste Text</h2>
-              
+        {/* Text Tab - Paste Text Interface */}
+        {activeTab === 'text' && (
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-gray-900/50 rounded-xl p-6 border border-gray-800">
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Title (optional)</label>
@@ -264,60 +262,71 @@ export function LibraryView() {
                     value={pasteTitle}
                     onChange={(e) => setPasteTitle(e.target.value)}
                     placeholder="Enter a title for this text..."
-                    className="w-full bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 focus:border-reader-orp focus:outline-none"
+                    className="w-full bg-gray-800 px-4 py-3 rounded-lg border border-gray-700 focus:border-reader-orp focus:outline-none"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Text</label>
+                  <label className="block text-sm text-gray-400 mb-2">Paste your text</label>
                   <textarea
                     value={pasteText}
                     onChange={(e) => setPasteText(e.target.value)}
-                    placeholder="Paste your text here..."
-                    rows={12}
-                    className="w-full bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 focus:border-reader-orp focus:outline-none resize-none"
+                    placeholder="Paste or type your text here..."
+                    rows={16}
+                    className="w-full bg-gray-800 px-4 py-3 rounded-lg border border-gray-700 focus:border-reader-orp focus:outline-none resize-none font-mono text-sm"
                     autoFocus
                   />
                 </div>
               </div>
               
-              <div className="flex items-center justify-end gap-3 mt-6">
-                <button
-                  onClick={() => {
-                    setShowPasteModal(false)
-                    setPasteText('')
-                    setPasteTitle('')
-                  }}
-                  className="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  Cancel
-                </button>
+              <div className="flex items-center justify-end mt-6">
                 <button
                   onClick={handlePasteText}
                   disabled={!pasteText.trim() || importing}
                   className={clsx(
-                    "px-4 py-2 rounded-lg transition-colors font-medium",
+                    "px-6 py-3 rounded-lg transition-colors font-medium text-base",
                     !pasteText.trim() || importing
                       ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                       : "bg-reader-orp hover:bg-red-500 text-white"
                   )}
                 >
-                  {importing ? 'Adding...' : 'Add to Library'}
+                  {importing ? 'Starting...' : 'Start Reading'}
                 </button>
               </div>
             </div>
           </div>
         )}
         
-        {/* Document list */}
-        {!documents || documents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-500">
-            <BookOpen size={48} className="mb-4 opacity-50" />
-            <p className="text-lg mb-2">No documents yet</p>
-            <p className="text-sm">Import a PDF, DOCX, or EPUB to get started</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
+        {/* Website Tab - File Upload and Document List */}
+        {activeTab === 'website' && (
+          <>
+            {/* Upload Section */}
+            <div className="mb-8 text-center">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importing}
+                className={clsx(
+                  "inline-flex items-center gap-2 px-6 py-3 rounded-lg transition-colors font-medium",
+                  importing 
+                    ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                    : "bg-reader-orp hover:bg-red-500 text-white"
+                )}
+              >
+                <Upload size={20} />
+                {importing ? 'Uploading...' : 'Upload Document'}
+              </button>
+              <p className="text-sm text-gray-500 mt-2">PDF, DOCX, EPUB, or TXT files</p>
+            </div>
+            
+            {/* Document list */}
+            {!documents || documents.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+                <BookOpen size={48} className="mb-4 opacity-50" />
+                <p className="text-lg mb-2">No documents yet</p>
+                <p className="text-sm">Upload a PDF, DOCX, EPUB, or TXT file to get started</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
             {documents.map((doc) => (
               <div
                 key={doc.id}
@@ -399,20 +408,22 @@ export function LibraryView() {
                 </div>
               </div>
             ))}
-          </div>
+              </div>
+            )}
+            
+            {/* Keyboard shortcuts help */}
+            <div className="mt-12 p-4 bg-gray-900/30 rounded-xl">
+              <h3 className="text-sm font-medium text-gray-400 mb-3">Keyboard Shortcuts (in Reader)</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm text-gray-500">
+                <div><kbd className="px-2 py-0.5 bg-gray-800 rounded">Space</kbd> Play/Pause or Hold to read</div>
+                <div><kbd className="px-2 py-0.5 bg-gray-800 rounded">←</kbd> <kbd className="px-2 py-0.5 bg-gray-800 rounded">→</kbd> Step word</div>
+                <div><kbd className="px-2 py-0.5 bg-gray-800 rounded">Shift</kbd>+<kbd className="px-2 py-0.5 bg-gray-800 rounded">←</kbd> <kbd className="px-2 py-0.5 bg-gray-800 rounded">→</kbd> Jump 10 words</div>
+                <div><kbd className="px-2 py-0.5 bg-gray-800 rounded">↑</kbd> <kbd className="px-2 py-0.5 bg-gray-800 rounded">↓</kbd> Adjust speed</div>
+                <div><kbd className="px-2 py-0.5 bg-gray-800 rounded">Esc</kbd> Back to library</div>
+              </div>
+            </div>
+          </>
         )}
-        
-        {/* Keyboard shortcuts help */}
-        <div className="mt-12 p-4 bg-gray-900/30 rounded-xl">
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Keyboard Shortcuts (in Reader)</h3>
-          <div className="grid grid-cols-2 gap-2 text-sm text-gray-500">
-            <div><kbd className="px-2 py-0.5 bg-gray-800 rounded">Space</kbd> Play/Pause or Hold to read</div>
-            <div><kbd className="px-2 py-0.5 bg-gray-800 rounded">←</kbd> <kbd className="px-2 py-0.5 bg-gray-800 rounded">→</kbd> Step word</div>
-            <div><kbd className="px-2 py-0.5 bg-gray-800 rounded">Shift</kbd>+<kbd className="px-2 py-0.5 bg-gray-800 rounded">←</kbd> <kbd className="px-2 py-0.5 bg-gray-800 rounded">→</kbd> Jump 10 words</div>
-            <div><kbd className="px-2 py-0.5 bg-gray-800 rounded">↑</kbd> <kbd className="px-2 py-0.5 bg-gray-800 rounded">↓</kbd> Adjust speed</div>
-            <div><kbd className="px-2 py-0.5 bg-gray-800 rounded">Esc</kbd> Back to library</div>
-          </div>
-        </div>
       </div>
     </div>
   )
